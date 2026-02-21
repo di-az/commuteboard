@@ -1,10 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"time"
 )
+
+const UpdateRate = 1 * time.Minute
+const tickRate = 10 * time.Second
 
 var house = Location{
 	Name:      "House",
@@ -32,13 +34,27 @@ var work = Location{
 	},
 }
 
+var piano = Location{
+	Name:      "Piano",
+	Latitude:  "20.688900217575455",
+	Longitude: "-103.42880959994349",
+	Schedule: Schedule{
+		Days: map[time.Weekday][]TimeRange{
+			time.Saturday: {
+				{Start: 9 * time.Hour, End: 18 * time.Hour},
+			},
+		},
+	},
+}
+
 type TimeRange struct {
 	Start time.Duration
 	End   time.Duration
 }
 
 type Schedule struct {
-	Days map[time.Weekday][]TimeRange
+	Days        map[time.Weekday][]TimeRange
+	LastUpdated time.Time
 }
 
 type Location struct {
@@ -61,7 +77,7 @@ func getRoute(start, finish Location) (Route, error) {
 	route := Route{
 		Start:        start,
 		Finish:       finish,
-		Minutes:      10,
+		Minutes:      18,
 		TrafficLevel: "Low",
 		Timestamp:    time.Now(),
 	}
@@ -74,12 +90,11 @@ func (s Schedule) ShouldRunNow(t time.Time) bool {
 		return false
 	}
 
-	nowMinutes := time.Duration(t.Hour())*time.Hour +
-		time.Duration(t.Minute())*time.Minute
+	nowMinutes := time.Duration(t.Hour())*time.Hour + time.Duration(t.Minute())*time.Minute
 
 	for _, timeRange := range dayRanges {
 		if nowMinutes >= timeRange.Start && nowMinutes <= timeRange.End {
-			log.Printf("Need to run now for: %v %v-%v", t.Weekday(), timeRange.Start, timeRange.End)
+			// log.Printf("Need to run now for: %v %v-%v", t.Weekday(), timeRange.Start, timeRange.End)
 			return true
 		}
 	}
@@ -88,17 +103,41 @@ func (s Schedule) ShouldRunNow(t time.Time) bool {
 }
 
 func main() {
-	locations := []Location{work}
-	t := time.Now()
-	timeNow := time.Date(2026, 2, 21, 10, 30, 0, 0, t.Location())
+	locations := []*Location{&work, &piano}
+	ticker := time.NewTicker(tickRate)
+	defer ticker.Stop()
 
-	for _, location := range locations {
-		location.Schedule.ShouldRunNow(timeNow)
-		route, err := getRoute(house, work)
-		if err != nil {
-			log.Fatalf("Error calculating route: %v", err.Error())
+	log.Printf("Route engine has started\n")
+
+	// t := time.Now()
+	// timeNow := time.Date(2026, 2, 21, 10, 30, 0, 0, t.Location())
+
+	for range ticker.C {
+		log.Printf("Ticking")
+		now := time.Now()
+		for _, location := range locations {
+			// Skip if not in time range
+			if !location.Schedule.ShouldRunNow(now) {
+				continue
+			}
+
+			// Skip if recently updated
+			if now.Sub(location.Schedule.LastUpdated) < UpdateRate {
+				continue
+			}
+
+			route, err := getRoute(house, *location)
+			if err != nil {
+				log.Printf("Error calculating route for %s: %v", location.Name, err)
+				continue
+			}
+
+			location.Schedule.LastUpdated = now
+			log.Printf("Route updated: %s -> %s (%d min)",
+				house.Name,
+				location.Name,
+				route.Minutes,
+			)
 		}
-		fmt.Printf("Go from: %v to %v\n", house.Name, location.Name)
-		fmt.Printf("Route will take: %v\n", route.Minutes)
 	}
 }
