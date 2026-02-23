@@ -2,6 +2,8 @@ package store
 
 import (
 	"commuteboard/internal/domain"
+	"errors"
+	"fmt"
 	"sync"
 )
 
@@ -18,7 +20,7 @@ func (s *RouteStore) Set(route domain.Route) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	key := route.Finish.Name
+	key := route.Finish.ID
 	s.routes[key] = route
 }
 
@@ -31,5 +33,19 @@ func (s *RouteStore) GetAll() []domain.Route {
 		result = append(result, r)
 	}
 	return result
+}
 
+func (s *RouteStore) GetByID(id string) (domain.Route, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	route, ok := s.routes[id]
+	fmt.Println(s.routes)
+	fmt.Println(route)
+	fmt.Println(ok)
+	if !ok {
+		return domain.Route{}, errors.New("route not found")
+	}
+
+	return route, nil
 }

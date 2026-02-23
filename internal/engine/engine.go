@@ -35,8 +35,6 @@ func (e *RouteEngine) Run() {
 	ticker := time.NewTicker(e.TickRate)
 	defer ticker.Stop()
 
-	// t := time.Now()
-	// timeNow := time.Date(2026, 2, 21, 10, 30, 0, 0, t.Location())
 	log.Printf("Route engine has started\n")
 
 	for range ticker.C {

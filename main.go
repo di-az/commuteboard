@@ -13,6 +13,7 @@ const UpdateRate = 1 * time.Minute
 const tickRate = 10 * time.Second
 
 var home = domain.Location{
+	ID:        "1",
 	Name:      "Home",
 	Latitude:  "20.745317326696103",
 	Longitude: "-103.44431208289149",
@@ -20,6 +21,7 @@ var home = domain.Location{
 }
 
 var work = domain.Location{
+	ID:        "2",
 	Name:      "Work",
 	Latitude:  "20.688900217575455",
 	Longitude: "-103.42880959994349",
