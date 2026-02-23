@@ -5,7 +5,12 @@ import (
 	"commuteboard/internal/engine"
 	"commuteboard/internal/server"
 	"commuteboard/internal/store"
-	"fmt"
+	"context"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -41,6 +46,7 @@ var work = domain.Location{
 }
 
 var piano = domain.Location{
+	ID:        "3",
 	Name:      "Piano",
 	Latitude:  "20.688900217575455",
 	Longitude: "-103.42880959994349",
@@ -54,16 +60,24 @@ var piano = domain.Location{
 }
 
 func main() {
-	fmt.Println("Running server")
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
 	locations := []*domain.Location{&work, &piano}
 	store := store.NewRouteStore()
 	engine := engine.NewRouteEngine(home, locations, store, UpdateRate, tickRate)
-
-	go engine.Run()
-
 	server := server.NewHttpServer(store)
-	server.Run()
-	// server.GetRoutes()
-	select {}
+
+	// Run HTTP server
+	go func() {
+		if err := server.Run(ctx); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("server error: %v", err)
+		}
+	}()
+
+	// Run engine
+	go engine.Run(ctx)
+
+	<-ctx.Done()
+	log.Println("Shutting down application...")
 }

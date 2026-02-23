@@ -3,7 +3,6 @@ package store
 import (
 	"commuteboard/internal/domain"
 	"errors"
-	"fmt"
 	"sync"
 )
 
@@ -40,9 +39,6 @@ func (s *RouteStore) GetByID(id string) (domain.Route, error) {
 	defer s.mu.RUnlock()
 
 	route, ok := s.routes[id]
-	fmt.Println(s.routes)
-	fmt.Println(route)
-	fmt.Println(ok)
 	if !ok {
 		return domain.Route{}, errors.New("route not found")
 	}

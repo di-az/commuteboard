@@ -3,6 +3,7 @@ package engine
 import (
 	"commuteboard/internal/domain"
 	"commuteboard/internal/store"
+	"context"
 	"log"
 	"time"
 )
@@ -31,41 +32,51 @@ func NewRouteEngine(
 	}
 }
 
-func (e *RouteEngine) Run() {
+func (e *RouteEngine) checkLocations() {
+	// log.Printf("Ticking")
+	now := time.Now()
+
+	for _, location := range e.Locations {
+		// Skip if not in time range
+		if !location.Schedule.ShouldRunNow(now) {
+			continue
+		}
+
+		// Skip if recently updated
+		if now.Sub(location.Schedule.LastUpdated) < e.UpdateRate {
+			continue
+		}
+
+		route, err := getRoute(e.Home, *location)
+		if err != nil {
+			log.Printf("Error calculating route for %s: %v", location.Name, err)
+			continue
+		}
+
+		location.Schedule.LastUpdated = now
+		e.Store.Set(route)
+
+		log.Printf("Route updated: %s -> %s (%d min)",
+			e.Home.Name,
+			location.Name,
+			route.Minutes,
+		)
+	}
+}
+
+func (e *RouteEngine) Run(ctx context.Context) {
 	ticker := time.NewTicker(e.TickRate)
 	defer ticker.Stop()
 
-	log.Printf("Route engine has started\n")
+	log.Printf("Route engine started\n")
+	e.checkLocations()
 
-	for range ticker.C {
-		log.Printf("Ticking")
-		now := time.Now()
-
-		for _, location := range e.Locations {
-			// Skip if not in time range
-			if !location.Schedule.ShouldRunNow(now) {
-				continue
-			}
-
-			// Skip if recently updated
-			if now.Sub(location.Schedule.LastUpdated) < e.UpdateRate {
-				continue
-			}
-
-			route, err := getRoute(e.Home, *location)
-			if err != nil {
-				log.Printf("Error calculating route for %s: %v", location.Name, err)
-				continue
-			}
-
-			location.Schedule.LastUpdated = now
-			e.Store.Set(route)
-
-			log.Printf("Route updated: %s -> %s (%d min)",
-				e.Home.Name,
-				location.Name,
-				route.Minutes,
-			)
+	for {
+		select {
+		case <-ticker.C:
+			e.checkLocations()
+		case <-ctx.Done():
+			return
 		}
 	}
 }
