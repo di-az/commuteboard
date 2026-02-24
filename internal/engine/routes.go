@@ -5,6 +5,7 @@ import (
 	"commuteboard/internal/domain"
 	"context"
 	"encoding/json"
+	"github.com/google/uuid"
 	"io"
 	"log"
 	"net/http"
@@ -156,6 +157,7 @@ func (e *RouteEngine) computeRouteMatrix(
 		destination := destinations[el.DestinationIndex]
 
 		commutes = append(commutes, domain.Commute{
+			ID:             uuid.NewString(),
 			OriginID:       e.Home.ID,
 			DestinationID:  destination.ID,
 			DistanceMeters: el.DistanceMeters,
