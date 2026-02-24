@@ -5,6 +5,7 @@ import (
 	"commuteboard/internal/store"
 	"context"
 	"log"
+	"net/http"
 	"sync/atomic"
 	"time"
 )
@@ -17,6 +18,8 @@ type RouteEngine struct {
 	TickRate   time.Duration
 	running    atomic.Bool
 	lastTick   atomic.Value
+	client     *http.Client
+	apiKey     string
 }
 
 type Status struct {
@@ -33,6 +36,7 @@ func NewRouteEngine(
 	store *store.RouteStore,
 	updateRate time.Duration,
 	tickRate time.Duration,
+	apiKey string,
 ) *RouteEngine {
 	return &RouteEngine{
 		Home:       home,
@@ -40,17 +44,22 @@ func NewRouteEngine(
 		Store:      store,
 		UpdateRate: updateRate,
 		TickRate:   tickRate,
+		client:     &http.Client{Timeout: 5 * time.Second},
+		apiKey:     apiKey,
 	}
 }
 
-func (e *RouteEngine) checkLocations() {
+func (e *RouteEngine) checkLocations(ctx context.Context) {
 	log.Printf("engine tick at %s", time.Now())
 	now := time.Now()
 	e.lastTick.Store(now)
 
+	var toUpdate []*domain.Location
+
 	for _, location := range e.Locations {
 		// Skip if not in time range
 		if !location.Schedule.ShouldRunNow(now) {
+			e.Store.Delete(location.ID)
 			continue
 		}
 
@@ -59,18 +68,26 @@ func (e *RouteEngine) checkLocations() {
 			continue
 		}
 
-		route, err := getRoute(e.Home, *location)
-		if err != nil {
-			log.Printf("Error calculating route for %s: %v", location.Name, err)
-			continue
-		}
+		toUpdate = append(toUpdate, location)
+	}
 
-		location.Schedule.LastUpdated = now
+	if len(toUpdate) == 0 {
+		return
+	}
+
+	// route, err := getRoute(e.Home, *location)
+	routes, err := e.computeRouteMatrix(ctx, toUpdate)
+	if err != nil {
+		log.Printf("error getting matrix: %v\n", err)
+		return
+	}
+
+	for i, route := range routes {
+		toUpdate[i].Schedule.LastUpdated = now
 		e.Store.Set(route)
-
 		log.Printf("Route updated: %s -> %s (%d min)",
 			e.Home.Name,
-			location.Name,
+			route.Finish.Name,
 			route.Minutes,
 		)
 	}
@@ -84,12 +101,12 @@ func (e *RouteEngine) Run(ctx context.Context) {
 	defer ticker.Stop()
 
 	log.Printf("Route engine started\n")
-	e.checkLocations()
+	e.checkLocations(ctx)
 
 	for {
 		select {
 		case <-ticker.C:
-			e.checkLocations()
+			e.checkLocations(ctx)
 		case <-ctx.Done():
 			log.Println("Route engine shutting down")
 			return

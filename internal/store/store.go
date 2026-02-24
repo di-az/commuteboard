@@ -45,3 +45,10 @@ func (s *RouteStore) GetByID(id string) (domain.Route, error) {
 
 	return route, nil
 }
+
+func (s *RouteStore) Delete(id string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	delete(s.routes, id)
+}

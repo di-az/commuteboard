@@ -32,14 +32,14 @@ var work = domain.Location{
 	Longitude: "-103.42880959994349",
 	Schedule: domain.Schedule{
 		Days: map[time.Weekday][]domain.TimeRange{
-			time.Tuesday: {
-				{Start: 8 * time.Hour, End: 10 * time.Hour},
-			},
+			// time.Tuesday: {
+			// 	{Start: 8 * time.Hour, End: 10 * time.Hour},
+			// },
 			time.Thursday: {
 				{Start: 8 * time.Hour, End: 10 * time.Hour},
 			},
-			time.Monday: {
-				{Start: 1 * time.Hour, End: 23 * time.Hour},
+			time.Tuesday: {
+				{Start: 0 * time.Hour, End: 23 * time.Hour},
 			},
 		},
 	},
@@ -60,12 +60,17 @@ var piano = domain.Location{
 }
 
 func main() {
+	apiKey := os.Getenv("GOOGLE_MAPS_API_KEY")
+	// if apiKey == "" {
+	// 	log.Fatal("GOOGLE_MAPS_API_KEY not set")
+	// }
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	locations := []*domain.Location{&work, &piano}
 	store := store.NewRouteStore()
-	engine := engine.NewRouteEngine(home, locations, store, UpdateRate, tickRate)
+	engine := engine.NewRouteEngine(home, locations, store, UpdateRate, tickRate, apiKey)
 	server := server.NewHttpServer(store, engine)
 
 	// Run HTTP server
