@@ -12,6 +12,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 const UpdateRate = 1 * time.Minute
@@ -60,10 +62,15 @@ var piano = domain.Location{
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("error loading config: %v", err)
+	}
+
 	apiKey := os.Getenv("GOOGLE_MAPS_API_KEY")
-	// if apiKey == "" {
-	// 	log.Fatal("GOOGLE_MAPS_API_KEY not set")
-	// }
+	if apiKey == "" {
+		log.Fatal("GOOGLE_MAPS_API_KEY not set")
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
