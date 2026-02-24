@@ -5,20 +5,24 @@ import (
 	"time"
 )
 
-type RouteResponse struct {
+type CommuteResponse struct {
+	OriginID        string    `json:"origin_id"`
+	OriginName      string    `json:"origin_name"`
 	DestinationID   string    `json:"destination_id"`
 	DestinationName string    `json:"destination_name"`
-	Minutes         int       `json:"minutes"`
-	TrafficLevel    string    `json:"traffic_level"`
-	Timestamp       time.Time `json:"timestamp"`
+	DurationMinutes int       `json:"duration_minutes"`
+	DistanceKM      float64   `json:"distance_km"`
+	UpdatedAt       time.Time `json:"updated_at"`
 }
 
-func NewRouteResponse(r domain.Route) RouteResponse {
-	return RouteResponse{
-		DestinationID:   r.Finish.ID,
-		DestinationName: r.Finish.Name,
-		Minutes:         r.Minutes,
-		TrafficLevel:    r.TrafficLevel,
-		Timestamp:       r.Timestamp,
+func NewCommuteResponse(origin domain.Location, destination domain.Location, commute domain.Commute) CommuteResponse {
+	return CommuteResponse{
+		OriginID:        origin.ID,
+		OriginName:      origin.Name,
+		DestinationID:   destination.ID,
+		DestinationName: destination.Name,
+		DurationMinutes: int(commute.Duration.Minutes()),
+		DistanceKM:      float64(commute.DistanceMeters) / 1000,
+		UpdatedAt:       commute.RecordedAt,
 	}
 }

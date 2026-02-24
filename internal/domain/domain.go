@@ -17,17 +17,23 @@ type Schedule struct {
 type Location struct {
 	ID        string
 	Name      string
-	Latitude  string
-	Longitude string
+	Latitude  float64
+	Longitude float64
 	Schedule  Schedule
 }
 
 type Route struct {
-	Start        Location
-	Finish       Location
-	Minutes      int
-	TrafficLevel string
-	Timestamp    time.Time
+	Origin      Location
+	Destination Location
+}
+
+type Commute struct {
+	ID             string
+	OriginID       string
+	DestinationID  string
+	DistanceMeters int
+	Duration       time.Duration
+	RecordedAt     time.Time
 }
 
 func (s Schedule) ShouldRunNow(t time.Time) bool {

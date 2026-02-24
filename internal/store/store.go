@@ -3,52 +3,54 @@ package store
 import (
 	"commuteboard/internal/domain"
 	"errors"
+	"log"
 	"sync"
 )
 
 type RouteStore struct {
-	mu     sync.RWMutex
-	routes map[string]domain.Route
+	mu       sync.RWMutex
+	commutes map[string]domain.Commute
 }
 
 func NewRouteStore() *RouteStore {
-	return &RouteStore{routes: make(map[string]domain.Route)}
+	return &RouteStore{commutes: make(map[string]domain.Commute)}
 }
 
-func (s *RouteStore) Set(route domain.Route) {
+func (s *RouteStore) Set(commute domain.Commute) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	key := route.Finish.ID
-	s.routes[key] = route
+	key := commute.DestinationID
+	s.commutes[key] = commute
 }
 
-func (s *RouteStore) GetAll() []domain.Route {
+func (s *RouteStore) GetAll() []domain.Commute {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	result := make([]domain.Route, 0, len(s.routes))
-	for _, r := range s.routes {
-		result = append(result, r)
+	log.Printf("GETTING ALL ROUTES: %v\n", s.commutes)
+	result := make([]domain.Commute, 0, len(s.commutes))
+	for _, c := range s.commutes {
+		result = append(result, c)
 	}
 	return result
 }
 
-func (s *RouteStore) GetByID(id string) (domain.Route, error) {
+func (s *RouteStore) GetByID(id string) (domain.Commute, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	route, ok := s.routes[id]
+	commute, ok := s.commutes[id]
 	if !ok {
-		return domain.Route{}, errors.New("route not found")
+		return domain.Commute{}, errors.New("route not found")
 	}
 
-	return route, nil
+	return commute, nil
 }
 
 func (s *RouteStore) Delete(id string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	delete(s.routes, id)
+	delete(s.commutes, id)
 }

@@ -4,6 +4,7 @@ import (
 	"commuteboard/internal/engine"
 	"commuteboard/internal/store"
 	"context"
+	"errors"
 	"log"
 	"net"
 	"net/http"
@@ -55,23 +56,38 @@ func (s *HttpServer) Run(ctx context.Context) error {
 
 func (s *HttpServer) GetRoutes(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Getting routes\n")
-	var responseRoutes []RouteResponse
-	for _, route := range s.store.GetAll() {
-		response := NewRouteResponse(route)
-		responseRoutes = append(responseRoutes, response)
+	var responses []CommuteResponse
+	for _, commute := range s.store.GetAll() {
+		origin := s.engine.GetLocationByID(commute.OriginID)
+		destination := s.engine.GetLocationByID(commute.DestinationID)
+		if origin == nil || destination == nil {
+			continue
+		}
+
+		newComm := NewCommuteResponse(*origin, *destination, commute)
+		responses = append(responses, newComm)
 	}
-	writeJSON(w, http.StatusOK, responseRoutes)
+	writeJSON(w, http.StatusOK, responses)
 }
 
 func (s *HttpServer) GetRouteByID(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	log.Printf("Getting route for id: %v\n", id)
-	route, err := s.store.GetByID(id)
+
+	commute, err := s.store.GetByID(id)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
-	routeResp := NewRouteResponse(route)
+
+	origin := s.engine.GetLocationByID(commute.OriginID)
+	destination := s.engine.GetLocationByID(commute.DestinationID)
+	if origin == nil || destination == nil {
+		writeError(w, errors.New("missing origin or destination"))
+		return
+	}
+
+	routeResp := NewCommuteResponse(*origin, *destination, commute)
 	writeJSON(w, http.StatusOK, routeResp)
 }
 

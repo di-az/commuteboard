@@ -8,8 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"strconv"
-	// "time"
+	"time"
 )
 
 var TRAVEL_MODE = "DRIVE"
@@ -45,21 +44,19 @@ type matrixLatLng struct {
 	Longitude float64 `json:"longitude"`
 }
 
-func toMatrixOrigin(loc *domain.Location) (matrixOrigin, error) {
-	lat, err := strconv.ParseFloat(loc.Latitude, 64)
-	if err != nil {
-		return matrixOrigin{}, err
-	}
-	lng, err := strconv.ParseFloat(loc.Longitude, 64)
-	if err != nil {
-		return matrixOrigin{}, err
-	}
+type RouteMatrixElement struct {
+	OriginIndex      int    `json:"originIndex"`
+	DestinationIndex int    `json:"destinationIndex"`
+	DistanceMeters   int    `json:"distanceMeters"`
+	Duration         string `json:"duration"`
+}
 
+func toMatrixOrigin(loc *domain.Location) (matrixOrigin, error) {
 	origin := matrixOrigin{
 		Waypoint: matrixWaypoint{
 			Location: matrixLocation{
 				LatLng: matrixLatLng{
-					Latitude: lat, Longitude: lng,
+					Latitude: loc.Latitude, Longitude: loc.Longitude,
 				},
 			},
 		},
@@ -68,20 +65,11 @@ func toMatrixOrigin(loc *domain.Location) (matrixOrigin, error) {
 }
 
 func toMatrixDestination(loc *domain.Location) (matrixDestination, error) {
-	lat, err := strconv.ParseFloat(loc.Latitude, 64)
-	if err != nil {
-		return matrixDestination{}, err
-	}
-	lng, err := strconv.ParseFloat(loc.Longitude, 64)
-	if err != nil {
-		return matrixDestination{}, err
-	}
-
 	destination := matrixDestination{
 		Waypoint: matrixWaypoint{
 			Location: matrixLocation{
 				LatLng: matrixLatLng{
-					Latitude: lat, Longitude: lng,
+					Latitude: loc.Latitude, Longitude: loc.Longitude,
 				},
 			},
 		},
@@ -92,7 +80,7 @@ func toMatrixDestination(loc *domain.Location) (matrixDestination, error) {
 func (e *RouteEngine) computeRouteMatrix(
 	ctx context.Context,
 	destinations []*domain.Location,
-) ([]domain.Route, error) {
+) ([]domain.Commute, error) {
 	// Transform data into request body for API request
 	origin, err := toMatrixOrigin(&e.Home)
 	if err != nil {
@@ -153,5 +141,28 @@ func (e *RouteEngine) computeRouteMatrix(
 	bodyBytes, _ := io.ReadAll(resp.Body)
 	log.Printf("Raw response:\n%s\n", string(bodyBytes))
 
-	return []domain.Route{}, nil
+	var elements []RouteMatrixElement
+	if err := json.Unmarshal(bodyBytes, &elements); err != nil {
+		return nil, err
+	}
+
+	var commutes []domain.Commute
+	for _, el := range elements {
+		duration, err := time.ParseDuration(el.Duration)
+		if err != nil {
+			return nil, err
+		}
+
+		destination := destinations[el.DestinationIndex]
+
+		commutes = append(commutes, domain.Commute{
+			OriginID:       e.Home.ID,
+			DestinationID:  destination.ID,
+			DistanceMeters: el.DistanceMeters,
+			Duration:       duration,
+			RecordedAt:     time.Now(),
+		})
+	}
+
+	return commutes, nil
 }

@@ -17,21 +17,21 @@ import (
 )
 
 const UpdateRate = 1 * time.Minute
-const tickRate = 10 * time.Second
+const tickRate = 10 * time.Minute
 
 var home = domain.Location{
 	ID:        "1",
 	Name:      "Home",
-	Latitude:  "20.745317326696103",
-	Longitude: "-103.44431208289149",
+	Latitude:  20.745317326696103,
+	Longitude: -103.44431208289149,
 	// Schedule:  Schedule{Times: []string{"08:00-10:00"}},
 }
 
 var work = domain.Location{
 	ID:        "2",
 	Name:      "Work",
-	Latitude:  "20.688900217575455",
-	Longitude: "-103.42880959994349",
+	Latitude:  20.688900217575455,
+	Longitude: -103.42880959994349,
 	Schedule: domain.Schedule{
 		Days: map[time.Weekday][]domain.TimeRange{
 			// time.Tuesday: {
@@ -50,8 +50,8 @@ var work = domain.Location{
 var piano = domain.Location{
 	ID:        "3",
 	Name:      "Piano",
-	Latitude:  "20.688900217575455",
-	Longitude: "-103.42880959994349",
+	Latitude:  20.688900217575455,
+	Longitude: -103.42880959994349,
 	Schedule: domain.Schedule{
 		Days: map[time.Weekday][]domain.TimeRange{
 			time.Saturday: {
