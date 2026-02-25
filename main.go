@@ -1,6 +1,7 @@
 package main
 
 import (
+	"commuteboard/internal/db"
 	"commuteboard/internal/domain"
 	"commuteboard/internal/engine"
 	"commuteboard/internal/server"
@@ -70,6 +71,11 @@ func main() {
 	apiKey := os.Getenv("GOOGLE_MAPS_API_KEY")
 	if apiKey == "" {
 		log.Fatal("GOOGLE_MAPS_API_KEY not set")
+	}
+
+	dbConn := db.NewSQLite("routes.db")
+	if err := db.Migrate(dbConn); err != nil {
+		log.Fatal(err)
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
