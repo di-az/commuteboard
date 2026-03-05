@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"time"
 )
 
 const PORT = ":3333"
@@ -23,6 +24,7 @@ func NewHttpServer(store *store.RouteStore, engine *engine.RouteEngine) *HttpSer
 func (s *HttpServer) Run(ctx context.Context) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/routes", s.GetRoutes)
+	mux.HandleFunc("/routes/active", s.GetActiveRoutes)
 	// mux.HandleFunc("/routes/{id}", s.GetRouteByID)
 	mux.HandleFunc("/health", s.CheckHealth)
 	mux.HandleFunc("/engine/status", s.EngineStatus)
@@ -54,7 +56,7 @@ func (s *HttpServer) Run(ctx context.Context) error {
 }
 
 func (s *HttpServer) GetRoutes(w http.ResponseWriter, r *http.Request) {
-	log.Println("Getting routes")
+	log.Println("GET /routes")
 
 	routes := s.engine.GetRoutes()
 	response := make([]RouteResponse, 0, len(routes))
@@ -63,6 +65,21 @@ func (s *HttpServer) GetRoutes(w http.ResponseWriter, r *http.Request) {
 		response = append(response, NewRouteResponse(route))
 	}
 	writeJSON(w, http.StatusOK, response)
+}
+
+func (s *HttpServer) GetActiveRoutes(w http.ResponseWriter, r *http.Request) {
+	log.Println("GET /routes/active")
+
+	now := time.Now()
+	var active []RouteResponse
+
+	routes := s.engine.GetRoutes()
+	for _, route := range routes {
+		if route.Schedule.ShouldRunNow(now) {
+			active = append(active, NewRouteResponse(route))
+		}
+	}
+	writeJSON(w, http.StatusOK, active)
 }
 
 // func (s *HttpServer) GetRouteByID(w http.ResponseWriter, r *http.Request) {
