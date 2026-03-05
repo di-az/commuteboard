@@ -81,6 +81,7 @@ func (e *RouteEngine) computeRouteMatrix(
 	ctx context.Context,
 	routes []*domain.Route,
 ) ([]domain.RouteMeasurement, error) {
+	log.Println("REQUESTING MATRIX")
 	if len(routes) == 0 {
 		return nil, nil
 	}

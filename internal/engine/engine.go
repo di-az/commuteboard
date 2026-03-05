@@ -6,6 +6,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"sort"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -62,7 +63,7 @@ func NewRouteEngine(
 }
 
 func (e *RouteEngine) checkLocations(ctx context.Context) {
-	// log.Printf("engine tick at %s", time.Now())
+	log.Printf("engine tick at %s", time.Now())
 	now := time.Now()
 	e.lastTick.Store(now)
 
@@ -83,31 +84,32 @@ func (e *RouteEngine) checkLocations(ctx context.Context) {
 	}
 
 	if len(activeRoutes) == 0 {
-		// log.Println("NO ACTIVE")
 		return
 	}
 
-	// log.Println("HERE")
-	// for _, r := range activeRoutes {
-	// 	log.Println(*r)
-	// }
+	log.Println("HERE")
+	for _, r := range activeRoutes {
+		log.Println(*r)
+	}
 
-	// routes, err := e.computeRouteMatrix(ctx, activeDestinations)
-	// if err != nil {
-	// 	log.Printf("error computing matrix: %v\n", err)
-	// 	return
-	// }
-	//
-	// for _, comm := range routes {
-	// 	// activeDestinations[i].Schedule.LastUpdated = now
-	// 	e.lastMeasured[comm.DestinationID] = now
-	// 	log.Printf("Setting routes: %v\n", comm)
-	// 	err := e.Store.Set(ctx, comm)
-	// 	if err != nil {
-	// 		log.Printf("error saving to db: %v\n", err)
-	// 		return
-	// 	}
-	// }
+	measurements, err := e.computeRouteMatrix(ctx, activeRoutes)
+	if err != nil {
+		log.Printf("error computing matrix: %v\n", err)
+		return
+	}
+
+	// Update in-memory routes
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	for _, m := range measurements {
+		route, ok := e.Routes[m.RouteID]
+		if !ok {
+			continue
+		}
+		route.DistanceMeters = &m.DistanceMeters
+		route.DurationSeconds = &m.DurationSeconds
+		route.RecordedAt = &m.RecordedAt
+	}
 }
 
 func (e *RouteEngine) Run(ctx context.Context) {
@@ -148,5 +150,8 @@ func (e *RouteEngine) GetRoutes() []domain.Route {
 	for _, r := range e.Routes {
 		routes = append(routes, *r)
 	}
+	sort.Slice(routes, func(i, j int) bool {
+		return routes[i].ID < routes[j].ID
+	})
 	return routes
 }
