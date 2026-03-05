@@ -4,7 +4,6 @@ import (
 	"commuteboard/internal/engine"
 	"commuteboard/internal/store"
 	"context"
-	"errors"
 	"log"
 	"net"
 	"net/http"
@@ -24,7 +23,7 @@ func NewHttpServer(store *store.RouteStore, engine *engine.RouteEngine) *HttpSer
 func (s *HttpServer) Run(ctx context.Context) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/routes", s.GetRoutes)
-	mux.HandleFunc("/routes/{id}", s.GetRouteByID)
+	// mux.HandleFunc("/routes/{id}", s.GetRouteByID)
 	mux.HandleFunc("/health", s.CheckHealth)
 	mux.HandleFunc("/engine/status", s.EngineStatus)
 
@@ -55,41 +54,37 @@ func (s *HttpServer) Run(ctx context.Context) error {
 }
 
 func (s *HttpServer) GetRoutes(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Getting routes\n")
-	var responses []CommuteResponse
-	for _, route := range s.store.GetAll() {
-		origin := s.engine.GetLocationByID(route.OriginID)
-		destination := s.engine.GetLocationByID(route.DestinationID)
-		if origin == nil || destination == nil {
-			continue
-		}
+	log.Println("Getting routes")
 
-		newComm := NewCommuteResponse(*origin, *destination, route)
-		responses = append(responses, newComm)
+	routes := s.engine.GetRoutes()
+	response := make([]RouteResponse, 0, len(routes))
+
+	for _, route := range routes {
+		response = append(response, NewRouteResponse(route))
 	}
-	writeJSON(w, http.StatusOK, responses)
+	writeJSON(w, http.StatusOK, response)
 }
 
-func (s *HttpServer) GetRouteByID(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	log.Printf("Getting route for id: %v\n", id)
-
-	route, err := s.store.GetByID(id)
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-
-	origin := s.engine.GetLocationByID(route.OriginID)
-	destination := s.engine.GetLocationByID(route.DestinationID)
-	if origin == nil || destination == nil {
-		writeError(w, errors.New("missing origin or destination"))
-		return
-	}
-
-	routeResp := NewCommuteResponse(*origin, *destination, route)
-	writeJSON(w, http.StatusOK, routeResp)
-}
+// func (s *HttpServer) GetRouteByID(w http.ResponseWriter, r *http.Request) {
+// 	id := r.PathValue("id")
+// 	log.Printf("Getting route for id: %v\n", id)
+//
+// 	route, err := s.store.GetByID(id)
+// 	if err != nil {
+// 		writeError(w, err)
+// 		return
+// 	}
+//
+// 	origin := s.engine.GetLocationByID(route.OriginID)
+// 	destination := s.engine.GetLocationByID(route.DestinationID)
+// 	if origin == nil || destination == nil {
+// 		writeError(w, errors.New("missing origin or destination"))
+// 		return
+// 	}
+//
+// 	routeResp := NewCommuteResponse(*origin, *destination, route)
+// 	writeJSON(w, http.StatusOK, routeResp)
+// }
 
 func (s *HttpServer) CheckHealth(w http.ResponseWriter, r *http.Request) {
 	healthMessage := map[string]string{"status": "ok"}

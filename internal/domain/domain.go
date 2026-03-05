@@ -24,9 +24,9 @@ type Route struct {
 	ID              int
 	Origin          *Location
 	Destination     *Location
-	DistanceMeters  int
-	DurationSeconds time.Duration
-	RecordedAt      time.Time
+	DistanceMeters  *int
+	DurationSeconds *time.Duration
+	RecordedAt      *time.Time
 	Schedule        Schedule
 }
 
@@ -55,10 +55,10 @@ func (s Schedule) ShouldRunNow(t time.Time) bool {
 	return false
 }
 
-func (c Route) IsFresh(now time.Time, updateRate time.Duration) bool {
-	timeToUpdate := c.RecordedAt.Add(updateRate)
-	if timeToUpdate.Before(now) {
+func (r Route) IsFresh(now time.Time, updateRate time.Duration) bool {
+	if r.RecordedAt == nil {
 		return false
 	}
-	return true
+
+	return r.RecordedAt.Add(updateRate).After(now)
 }

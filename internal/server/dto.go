@@ -5,24 +5,33 @@ import (
 	"time"
 )
 
-type CommuteResponse struct {
-	OriginID        int       `json:"origin_id"`
-	OriginName      string    `json:"origin_name"`
-	DestinationID   int       `json:"destination_id"`
-	DestinationName string    `json:"destination_name"`
-	DurationMinutes int       `json:"duration_minutes"`
-	DistanceKM      float64   `json:"distance_km"`
-	UpdatedAt       time.Time `json:"updated_at"`
+type RouteResponse struct {
+	ID              int        `json:"id"`
+	Origin          string     `json:"origin"`
+	Destination     string     `json:"destination"`
+	DurationMinutes *int       `json:"duration_minutes"`
+	DistanceKM      *float64   `json:"distance_km"`
+	RecordedAt      *time.Time `json:"updated_at"`
 }
 
-func NewCommuteResponse(origin domain.Location, destination domain.Location, route domain.Route) CommuteResponse {
-	return CommuteResponse{
-		OriginID:        origin.ID,
-		OriginName:      origin.Name,
-		DestinationID:   destination.ID,
-		DestinationName: destination.Name,
-		DurationMinutes: int(route.DurationSeconds.Minutes()),
-		DistanceKM:      float64(route.DistanceMeters) / 1000,
-		UpdatedAt:       route.RecordedAt,
+func NewRouteResponse(route domain.Route) RouteResponse {
+	r := RouteResponse{
+		ID:          route.ID,
+		Origin:      route.Origin.Name,
+		Destination: route.Destination.Name,
 	}
+
+	if route.DurationSeconds != nil {
+		min := int(route.DurationSeconds.Minutes())
+		r.DurationMinutes = &min
+	}
+	if route.DistanceMeters != nil {
+		km := float64(*route.DistanceMeters) / 1000
+		r.DistanceKM = &km
+	}
+	if route.RecordedAt != nil {
+		r.RecordedAt = route.RecordedAt
+	}
+
+	return r
 }

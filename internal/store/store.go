@@ -48,12 +48,22 @@ func (s *RouteStore) GetAllRoutes(ctx context.Context) ([]*domain.Route, error) 
 		}
 
 		r := &domain.Route{
-			ID:              row.ID,
-			Origin:          origin,
-			Destination:     destination,
-			DistanceMeters:  row.DistanceMeters,
-			DurationSeconds: time.Duration(row.DurationSeconds) * time.Second,
-			RecordedAt:      row.RecordedAt,
+			ID:          row.ID,
+			Origin:      origin,
+			Destination: destination,
+		}
+
+		if row.DistanceMeters != nil {
+			r.DistanceMeters = row.DistanceMeters
+		}
+
+		if row.DurationSeconds != nil {
+			dur := time.Duration(*row.DurationSeconds) * time.Second
+			r.DurationSeconds = &dur
+		}
+
+		if row.RecordedAt != nil {
+			r.RecordedAt = row.RecordedAt
 		}
 
 		routes = append(routes, r)

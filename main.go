@@ -3,9 +3,11 @@ package main
 import (
 	"commuteboard/internal/db"
 	"commuteboard/internal/engine"
+	"commuteboard/internal/server"
 	"commuteboard/internal/store"
 	"context"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -86,14 +88,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// server := server.NewHttpServer(store, engine)
-	//
-	// // Run HTTP server
-	// go func() {
-	// 	if err := server.Run(ctx); err != nil && err != http.ErrServerClosed {
-	// 		log.Fatalf("server error: %v", err)
-	// 	}
-	// }()
+	server := server.NewHttpServer(store, engine)
+
+	// Run HTTP server
+	go func() {
+		if err := server.Run(ctx); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("server error: %v", err)
+		}
+	}()
 
 	// Run engine
 	go engine.Run(ctx)

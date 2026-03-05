@@ -25,9 +25,9 @@ type RouteRow struct {
 	ID              int
 	OriginID        int
 	DestinationID   int
-	DistanceMeters  int
-	DurationSeconds int
-	RecordedAt      time.Time
+	DistanceMeters  *int
+	DurationSeconds *int
+	RecordedAt      *time.Time
 }
 
 type LocationRow struct {
@@ -168,15 +168,31 @@ func (s *SQLite) GetRouteRows(ctx context.Context) ([]RouteRow, error) {
 	for rows.Next() {
 		var r RouteRow
 
+		var distance sql.NullInt64
+		var duration sql.NullInt64
+		var recorded sql.NullTime
+
 		if err := rows.Scan(
 			&r.ID,
 			&r.OriginID,
 			&r.DestinationID,
-			&r.DistanceMeters,
-			&r.DurationSeconds,
-			&r.RecordedAt,
+			&distance,
+			&duration,
+			&recorded,
 		); err != nil {
 			return nil, err
+		}
+
+		if distance.Valid {
+			d := int(distance.Int64)
+			r.DistanceMeters = &d
+		}
+		if duration.Valid {
+			d := int(distance.Int64)
+			r.DistanceMeters = &d
+		}
+		if recorded.Valid {
+			r.RecordedAt = &recorded.Time
 		}
 
 		result = append(result, r)

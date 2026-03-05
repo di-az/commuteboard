@@ -6,11 +6,13 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"sync"
 	"sync/atomic"
 	"time"
 )
 
 type RouteEngine struct {
+	mu     sync.RWMutex
 	Routes map[int]*domain.Route
 	Store  *store.RouteStore
 
@@ -136,4 +138,15 @@ func (e *RouteEngine) Status() Status {
 		UpdateRate: e.UpdateRate.String(),
 		Locations:  len(e.Routes),
 	}
+}
+
+func (e *RouteEngine) GetRoutes() []domain.Route {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+
+	routes := make([]domain.Route, 0, len(e.Routes))
+	for _, r := range e.Routes {
+		routes = append(routes, *r)
+	}
+	return routes
 }
