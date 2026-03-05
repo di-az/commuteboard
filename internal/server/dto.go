@@ -11,7 +11,8 @@ type RouteResponse struct {
 	Destination     string     `json:"destination"`
 	DurationMinutes *int       `json:"duration_minutes"`
 	DistanceKM      *float64   `json:"distance_km"`
-	RecordedAt      *time.Time `json:"updated_at"`
+	RecordedAt      *time.Time `json:"recorded_at"`
+	ActiveNow       bool       `json:"active_now"`
 }
 
 func NewRouteResponse(route domain.Route) RouteResponse {
@@ -19,6 +20,7 @@ func NewRouteResponse(route domain.Route) RouteResponse {
 		ID:          route.ID,
 		Origin:      route.Origin.Name,
 		Destination: route.Destination.Name,
+		ActiveNow:   route.Schedule.ShouldRunNow(time.Now()),
 	}
 
 	if route.DurationSeconds != nil {
