@@ -2,6 +2,7 @@ package server
 
 import (
 	"commuteboard/internal/domain"
+	"sort"
 	"time"
 )
 
@@ -9,7 +10,7 @@ type RouteResponse struct {
 	ID              int        `json:"id"`
 	Origin          string     `json:"origin"`
 	Destination     string     `json:"destination"`
-	DurationMinutes *int       `json:"duration_minutes"`
+	DurationMinutes *int       `json:"duration_minutes,omitempty"`
 	DistanceKM      *float64   `json:"distance_km"`
 	RecordedAt      *time.Time `json:"recorded_at"`
 	ActiveNow       bool       `json:"active_now"`
@@ -36,4 +37,26 @@ func NewRouteResponse(route domain.Route) RouteResponse {
 	}
 
 	return r
+}
+
+func SortRouteResponseSlice(routes []RouteResponse) {
+	sort.Slice(routes, func(i, j int) bool {
+		a := routes[i].DurationMinutes
+		b := routes[j].DurationMinutes
+
+		// Both nil → equal
+		if a == nil && b == nil {
+			return false
+		}
+
+		// Nil goes last
+		if a == nil {
+			return false
+		}
+		if b == nil {
+			return true
+		}
+
+		return *a < *b
+	})
 }

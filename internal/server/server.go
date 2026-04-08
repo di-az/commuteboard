@@ -71,7 +71,7 @@ func (s *HttpServer) GetActiveRoutes(w http.ResponseWriter, r *http.Request) {
 	log.Println("GET /routes/active")
 
 	now := time.Now()
-	var active []RouteResponse
+	active := make([]RouteResponse, 0)
 
 	routes := s.engine.GetRoutes()
 	for _, route := range routes {
@@ -79,6 +79,8 @@ func (s *HttpServer) GetActiveRoutes(w http.ResponseWriter, r *http.Request) {
 			active = append(active, NewRouteResponse(route))
 		}
 	}
+
+	SortRouteResponseSlice(active)
 	writeJSON(w, http.StatusOK, active)
 }
 
