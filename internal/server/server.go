@@ -31,7 +31,7 @@ func (s *HttpServer) Run(ctx context.Context) error {
 
 	server := &http.Server{
 		Addr:    PORT,
-		Handler: mux,
+		Handler: withCORS(mux),
 	}
 
 	ln, err := net.Listen("tcp", PORT)

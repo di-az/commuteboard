@@ -10,7 +10,7 @@ type RouteResponse struct {
 	ID              int        `json:"id"`
 	Origin          string     `json:"origin"`
 	Destination     string     `json:"destination"`
-	DurationMinutes *int       `json:"duration_minutes,omitempty"`
+	DurationMinutes *int       `json:"duration_minutes"`
 	DistanceKM      *float64   `json:"distance_km"`
 	RecordedAt      *time.Time `json:"recorded_at"`
 	ActiveNow       bool       `json:"active_now"`
