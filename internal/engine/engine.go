@@ -30,7 +30,7 @@ type Status struct {
 	TickRate   string `json:"tick_rate"`
 	UpdateRate string `json:"update_rate"`
 	Locations  int    `json:"locations"`
-	LastTick   int    `json:"last_tick"`
+	LastTick   string `json:"last_tick"`
 }
 
 func NewRouteEngine(
@@ -131,11 +131,19 @@ func (e *RouteEngine) Run(ctx context.Context) {
 }
 
 func (e *RouteEngine) Status() Status {
+	lastTick, _ := e.lastTick.Load().(time.Time)
+
+	var lastTickStr string
+	if !lastTick.IsZero() {
+		lastTickStr = lastTick.Format(time.RFC3339)
+	}
+
 	return Status{
 		Running:    e.running.Load(),
 		TickRate:   e.TickRate.String(),
 		UpdateRate: e.UpdateRate.String(),
 		Locations:  len(e.Routes),
+		LastTick:   lastTickStr,
 	}
 }
 
