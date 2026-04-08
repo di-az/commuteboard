@@ -87,11 +87,6 @@ func (e *RouteEngine) checkLocations(ctx context.Context) {
 		return
 	}
 
-	log.Println("HERE")
-	for _, r := range activeRoutes {
-		log.Println(*r)
-	}
-
 	measurements, err := e.computeRouteMatrix(ctx, activeRoutes)
 	if err != nil {
 		log.Printf("error computing matrix: %v\n", err)
