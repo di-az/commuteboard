@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -146,31 +147,49 @@ func (e *RouteEngine) computeRouteMatrix(
 	}
 	defer resp.Body.Close()
 
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
 	if resp.StatusCode != http.StatusOK {
+		log.Printf("Matrix error response:\n%s\n", string(bodyBytes))
 		return nil, fmt.Errorf("matrix request failed: %s", resp.Status)
 	}
 
+	// var prettyResp bytes.Buffer
+	// if err := json.Indent(&prettyResp, bodyBytes, "", "  "); err == nil {
+	// 	log.Printf("Matrix response:\n%s\n", prettyResp.String())
+	// } else {
+	// 	log.Printf("Matrix response (raw):\n%s\n", string(bodyBytes))
+	// }
+
 	var elements []RouteMatrixElement
-	if err := json.NewDecoder(resp.Body).Decode(&elements); err != nil {
+	if err := json.Unmarshal(bodyBytes, &elements); err != nil {
 		return nil, err
 	}
 
 	now := time.Now()
+	log.Printf("ELEMENTS %d:\n%v\n", len(elements), elements)
 
+	// Map response to in-memory routes
 	var routeMeasurements []domain.RouteMeasurement
-	// Update in-memory routes + persist
-	// var commutes []domain.Route
-	for i, el := range elements {
-		if i >= len(routes) {
+	log.Printf("Matrix response:\n")
+	log.Printf("%v", routes)
+	for _, el := range elements {
+		// Ignore cross routes
+		if el.OriginIndex != el.DestinationIndex {
 			continue
 		}
 
+		idx := el.OriginIndex
+		log.Printf("Route %d: %s %d", idx, el.Duration, el.DistanceMeters)
 		duration, err := time.ParseDuration(el.Duration)
 		if err != nil {
 			return nil, err
 		}
 
-		r := routes[i]
+		r := routes[idx]
 		routeMeasurements = append(routeMeasurements, domain.RouteMeasurement{
 			RouteID:         r.ID,
 			DistanceMeters:  el.DistanceMeters,
@@ -179,10 +198,10 @@ func (e *RouteEngine) computeRouteMatrix(
 		})
 	}
 
-	// log.Printf("ROUTE MEASURE")
-	// for _, route := range routeMeasurements {
-	// 	log.Printf("route measure: %s\n", route)
-	// }
+	log.Printf("Route Measures %d", len(routeMeasurements))
+	for _, route := range routeMeasurements {
+		log.Printf("route measure: %d %d %s %s\n", route.RouteID, route.DistanceMeters, route.DurationSeconds, route.RecordedAt)
+	}
 
 	// Persist measurement
 	if err := e.Store.UpdateMeasurements(ctx, routeMeasurements); err != nil {
