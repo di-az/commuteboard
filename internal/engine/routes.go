@@ -150,10 +150,6 @@ func (e *RouteEngine) computeRouteMatrix(
 		return nil, fmt.Errorf("matrix request failed: %s", resp.Status)
 	}
 
-	// log.Printf("Google response status: %s\n", resp.Status)
-	// bodyBytes, _ := io.ReadAll(resp.Body)
-	// log.Printf("Raw response:\n%s\n", string(bodyBytes))
-
 	var elements []RouteMatrixElement
 	if err := json.NewDecoder(resp.Body).Decode(&elements); err != nil {
 		return nil, err
@@ -182,6 +178,11 @@ func (e *RouteEngine) computeRouteMatrix(
 			RecordedAt:      now,
 		})
 	}
+
+	// log.Printf("ROUTE MEASURE")
+	// for _, route := range routeMeasurements {
+	// 	log.Printf("route measure: %s\n", route)
+	// }
 
 	// Persist measurement
 	if err := e.Store.UpdateMeasurements(ctx, routeMeasurements); err != nil {
