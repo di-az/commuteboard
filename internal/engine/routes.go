@@ -174,8 +174,6 @@ func (e *RouteEngine) computeRouteMatrix(
 
 	// Map response to in-memory routes
 	var routeMeasurements []domain.RouteMeasurement
-	log.Printf("Matrix response:\n")
-	log.Printf("%v", routes)
 	for _, el := range elements {
 		// Ignore cross routes
 		if el.OriginIndex != el.DestinationIndex {
@@ -183,7 +181,6 @@ func (e *RouteEngine) computeRouteMatrix(
 		}
 
 		idx := el.OriginIndex
-		log.Printf("Route %d: %s %d", idx, el.Duration, el.DistanceMeters)
 		duration, err := time.ParseDuration(el.Duration)
 		if err != nil {
 			return nil, err
@@ -198,9 +195,13 @@ func (e *RouteEngine) computeRouteMatrix(
 		})
 	}
 
-	log.Printf("Route Measures %d", len(routeMeasurements))
+	log.Printf("ROUTES:\n")
+	for _, route := range routes {
+		log.Printf("%s %s", route.Origin.Name, route.Destination.Name)
+	}
+	log.Printf("ROUTE MEASURES %d", len(routeMeasurements))
 	for _, route := range routeMeasurements {
-		log.Printf("route measure: %d %d %s %s\n", route.RouteID, route.DistanceMeters, route.DurationSeconds, route.RecordedAt)
+		log.Printf("Route measure: %d %d %s %s\n", route.RouteID, route.DistanceMeters, route.DurationSeconds, route.RecordedAt)
 	}
 
 	// Persist measurement
