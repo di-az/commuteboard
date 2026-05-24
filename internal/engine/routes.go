@@ -2,13 +2,13 @@ package engine
 
 import (
 	"bytes"
-	"commuteboard/internal/domain"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"signalboard/internal/domain"
 	"time"
 )
 

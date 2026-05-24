@@ -1,10 +1,10 @@
 package db
 
 import (
-	"commuteboard/internal/domain"
 	"context"
 	"database/sql"
 	"fmt"
+	"signalboard/internal/domain"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"

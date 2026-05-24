@@ -1,10 +1,9 @@
 package engine
 
 import (
+	"signalboard/internal/domain"
 	"testing"
 	"time"
-
-	"commuteboard/internal/domain"
 )
 
 func TestMapMatrixElements(t *testing.T) {

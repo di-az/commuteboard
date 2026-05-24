@@ -3,9 +3,8 @@ package engine
 import (
 	"fmt"
 	"log"
+	"signalboard/internal/domain"
 	"time"
-
-	"commuteboard/internal/domain"
 )
 
 func mapMatrixElements(

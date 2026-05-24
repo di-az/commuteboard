@@ -1,16 +1,16 @@
 package main
 
 import (
-	"commuteboard/internal/config"
-	"commuteboard/internal/db"
-	"commuteboard/internal/engine"
-	"commuteboard/internal/server"
-	"commuteboard/internal/store"
 	"context"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"signalboard/internal/config"
+	"signalboard/internal/db"
+	"signalboard/internal/engine"
+	"signalboard/internal/server"
+	"signalboard/internal/store"
 	"syscall"
 )
 

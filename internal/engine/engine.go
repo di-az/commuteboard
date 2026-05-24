@@ -1,11 +1,11 @@
 package engine
 
 import (
-	"commuteboard/internal/domain"
-	"commuteboard/internal/store"
 	"context"
 	"log"
 	"net/http"
+	"signalboard/internal/domain"
+	"signalboard/internal/store"
 	"sort"
 	"sync"
 	"sync/atomic"

@@ -1,10 +1,10 @@
 package store
 
 import (
-	"commuteboard/internal/db"
-	"commuteboard/internal/domain"
 	"context"
 	"fmt"
+	"signalboard/internal/db"
+	"signalboard/internal/domain"
 	"time"
 )
 

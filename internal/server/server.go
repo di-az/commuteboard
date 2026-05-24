@@ -1,13 +1,13 @@
 package server
 
 import (
-	"commuteboard/internal/engine"
-	"commuteboard/internal/store"
 	"context"
 	"errors"
 	"log"
 	"net"
 	"net/http"
+	"signalboard/internal/engine"
+	"signalboard/internal/store"
 	"time"
 )
 

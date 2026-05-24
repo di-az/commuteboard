@@ -1,7 +1,7 @@
 package server
 
 import (
-	"commuteboard/internal/domain"
+	"signalboard/internal/domain"
 	"sort"
 	"time"
 )

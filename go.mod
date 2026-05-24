@@ -1,4 +1,4 @@
-module commuteboard
+module signalboard
 
 go 1.25.6
 
