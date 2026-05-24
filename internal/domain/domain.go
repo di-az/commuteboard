@@ -60,5 +60,5 @@ func (r Route) IsFresh(now time.Time, updateRate time.Duration) bool {
 		return false
 	}
 
-	return r.RecordedAt.Add(updateRate).After(now)
+	return now.Sub(*r.RecordedAt) <= updateRate
 }
