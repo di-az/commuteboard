@@ -15,18 +15,14 @@ func mapMatrixElements(
 	var measurements []domain.RouteMeasurement
 
 	for _, el := range elements {
-		// Ignore cross-routes
-		if el.OriginIndex != el.DestinationIndex {
-			continue
-		}
-
-		idx := el.OriginIndex
+		idx := el.DestinationIndex
 
 		// Check for valid response body matrix
 		if idx < 0 || idx >= len(routes) {
 			log.Printf("invalid index from matrix response: %d", idx)
 			continue
 		}
+
 		log.Printf(
 			"Matrix element: origin=%d dest=%d duration=%s distance=%d",
 			el.OriginIndex,

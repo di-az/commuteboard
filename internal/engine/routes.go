@@ -78,6 +78,8 @@ func toMatrixDestination(loc *domain.Location) (matrixDestination, error) {
 	return destination, nil
 }
 
+// Computing Route Matrix using Google Maps Route Matrix.
+// https://developers.google.com/maps/documentation/routes/compute-route-matrix-over
 func (e *RouteEngine) computeRouteMatrix(
 	ctx context.Context,
 	routes []*domain.Route,
@@ -88,11 +90,15 @@ func (e *RouteEngine) computeRouteMatrix(
 	}
 
 	// Build origin/destination list
-	var origins []matrixOrigin
 	var destinations []matrixDestination
+	// var origins []matrixOrigin
+
+	origin, err := toMatrixOrigin(routes[0].Origin)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, r := range routes {
-		o, err := toMatrixOrigin(r.Origin)
 		if err != nil {
 			return nil, err
 		}
@@ -102,12 +108,13 @@ func (e *RouteEngine) computeRouteMatrix(
 			return nil, err
 		}
 
-		origins = append(origins, o)
 		destinations = append(destinations, d)
 	}
 
 	reqBody := matrixRequest{
-		Origins:           origins,
+		Origins: []matrixOrigin{
+			origin,
+		},
 		Destinations:      destinations,
 		TravelMode:        TRAVEL_MODE,
 		RoutingPreference: ROUTING_PREFERENCE,
@@ -151,6 +158,9 @@ func (e *RouteEngine) computeRouteMatrix(
 	if err != nil {
 		return nil, err
 	}
+	// DEBUG: Debugging lines
+	log.Printf("DEBUG:\n")
+	log.Print(string(bodyBytes))
 
 	if resp.StatusCode != http.StatusOK {
 		log.Printf("Matrix error response:\n%s\n", string(bodyBytes))
@@ -175,21 +185,21 @@ func (e *RouteEngine) computeRouteMatrix(
 		return nil, err
 	}
 
-	// Debugging lines
-	// log.Printf("ROUTES:\n")
-	// for _, route := range routes {
-	// 	log.Printf("%s %s", route.Origin.Name, route.Destination.Name)
-	// }
-	// log.Printf("ROUTE MEASURES %d", len(routeMeasurements))
-	// for _, route := range routeMeasurements {
-	// 	log.Printf(
-	// 		"Route measure: %d %d %s %s\n",
-	// 		route.RouteID,
-	// 		route.DistanceMeters,
-	// 		route.DurationSeconds,
-	// 		route.RecordedAt,
-	// 	)
-	// }
+	// DEBUG: Debugging lines
+	log.Printf("ROUTES:\n")
+	for _, route := range routes {
+		log.Printf("%s %s", route.Origin.Name, route.Destination.Name)
+	}
+	log.Printf("ROUTE MEASURES %d", len(routeMeasurements))
+	for _, route := range routeMeasurements {
+		log.Printf(
+			"Route measure: %d %d %s %s\n",
+			route.RouteID,
+			route.DistanceMeters,
+			route.DurationSeconds,
+			route.RecordedAt,
+		)
+	}
 
 	// Persist measurement
 	if err := e.Store.UpdateMeasurements(ctx, routeMeasurements); err != nil {
