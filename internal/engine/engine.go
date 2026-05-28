@@ -41,6 +41,19 @@ func NewRouteEngine(
 	apiKey string,
 ) (*RouteEngine, error) {
 	routes, err := store.GetRoutesWithSchedules(ctx)
+
+	log.Print("Loading routes")
+	for _, route := range routes {
+		log.Printf(
+			"%s %s %d %s %s",
+			route.Origin.Name,
+			route.Destination.Name,
+			route.DistanceMeters,
+			route.DurationSeconds,
+			route.RecordedAt,
+		)
+	}
+
 	if err != nil {
 		return nil, err
 	}

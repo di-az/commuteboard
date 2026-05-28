@@ -26,7 +26,7 @@ type RouteRow struct {
 	OriginID        int
 	DestinationID   int
 	DistanceMeters  *int
-	DurationSeconds *int
+	DurationSeconds *time.Duration
 	RecordedAt      *time.Time
 }
 
@@ -187,10 +187,12 @@ func (s *SQLite) GetRouteRows(ctx context.Context) ([]RouteRow, error) {
 			d := int(distance.Int64)
 			r.DistanceMeters = &d
 		}
+
 		if duration.Valid {
-			d := int(distance.Int64)
-			r.DistanceMeters = &d
+			d := time.Duration(duration.Int64) * time.Second
+			r.DurationSeconds = &d
 		}
+
 		if recorded.Valid {
 			r.RecordedAt = &recorded.Time
 		}

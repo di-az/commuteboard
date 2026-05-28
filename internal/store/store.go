@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"signalboard/internal/db"
 	"signalboard/internal/domain"
-	"time"
 )
 
 type RouteStore struct {
@@ -58,8 +57,7 @@ func (s *RouteStore) GetAllRoutes(ctx context.Context) ([]*domain.Route, error) 
 		}
 
 		if row.DurationSeconds != nil {
-			dur := time.Duration(*row.DurationSeconds) * time.Second
-			r.DurationSeconds = &dur
+			r.DurationSeconds = row.DurationSeconds
 		}
 
 		if row.RecordedAt != nil {
